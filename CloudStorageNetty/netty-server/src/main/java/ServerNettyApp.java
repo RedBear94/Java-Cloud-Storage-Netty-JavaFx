@@ -1,17 +1,17 @@
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFactory;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 
 public class ServerNettyApp {
+    private static final int PORT = 8189;
+
     public static void main(String[] args) {
         new ServerNettyApp();
     }
@@ -44,7 +44,7 @@ public class ServerNettyApp {
             // sync - запуск сервера на указанном порту в bind
             // ChannelFuture - объекты типа Future это информациия выполняемая из какой-то задачи.
             // через future - можно определить состояние сервера
-            ChannelFuture future = bootstrap.bind(8189).sync();
+            ChannelFuture future = bootstrap.bind(PORT).sync();
             System.out.println("Server started!");
             // closeFuture() - блокирующая операция
             future.channel().closeFuture().sync(); // Ждем когда сервер будет остановлен
