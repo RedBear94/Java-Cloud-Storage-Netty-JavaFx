@@ -5,7 +5,13 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ResourceBundle;
 
 public class NettyController implements Initializable {
@@ -21,7 +27,21 @@ public class NettyController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         network = new NettyNetwork((args) -> {
             if (args[0] instanceof String) {
-                mainArea.appendText((String)args[0] + "\n"); // Добавляем в mainArea команды отправленные серверу
+                // Добавляем в mainArea команды отправленные серверу
+                mainArea.appendText((String)args[0] + "\n");
+            }
+            else if (args[0] instanceof File){
+                // Сохраняем файлы полученные от сервера
+                File file = (File) args[0];
+                try {
+                    Files.copy(
+                            new FileInputStream(file),
+                            Paths.get("./netty-client/src/main/resources", file.getName()),
+                            StandardCopyOption.REPLACE_EXISTING
+                    );
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }

@@ -30,8 +30,17 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         if (msg instanceof String) {
             System.out.println("message from client " + clientName + ": " + msg);
             ctx.writeAndFlush(msg);
+
+            // Выполнение комманд полученных от клиента
             String command = (String) msg;
             if(command.startsWith("/")) {
+                if(command.startsWith("/download ")) {
+                    String [] op = command.split(" ");
+                    File file = new File("./netty-server/src/main/resources/" + op[1]);
+                    if(file.exists()) {
+                        ctx.writeAndFlush(file);
+                    }
+                }
                 return;
             }
         } else if (msg instanceof File){
