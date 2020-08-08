@@ -25,6 +25,8 @@ public class NettyController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // NettyNetwork - принимает Callback из нескольких аргументов типа Object
+        // обращение к этим аргументам происходит ввиде args[0] + выполняется -> - лямда выражение
         network = new NettyNetwork((args) -> {
             if (args[0] instanceof String) {
                 // Добавляем в mainArea команды отправленные серверу
