@@ -19,7 +19,11 @@ public class NettyController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        network = new NettyNetwork();
+        network = new NettyNetwork((args) -> {
+            if (args[0] instanceof String) {
+                mainArea.appendText((String)args[0] + "\n"); // Добавляем в mainArea команды отправленные серверу
+            }
+        });
     }
 
     public void sendCommand(ActionEvent actionEvent) {
