@@ -62,4 +62,8 @@ public class NettyNetwork {
     public void sendMessage(Object message) {
         channel.writeAndFlush(message);
     }
+
+    public void close() {
+        channel.close();
+    }
 }

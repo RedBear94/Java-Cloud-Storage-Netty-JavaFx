@@ -19,6 +19,12 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         cnt++;
         clientName = "user#" + cnt;
         System.out.println("Client " + clientName + " connected");
+
+        final File dir1 = new File("./netty-server/src/main/resources/" + clientName + "/");
+        if(!dir1.exists()) {
+            dir1.mkdir();
+        }
+        ctx.writeAndFlush("/name " + clientName);
         ctx.writeAndFlush("Вы подключились");
     }
 
@@ -36,19 +42,22 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             if(command.startsWith("/")) {
                 if(command.startsWith("/download ")) {
                     String [] op = command.split(" ");
-                    File file = new File("./netty-server/src/main/resources/" + op[1]);
+                    File file = new File("./netty-server/src/main/resources/" + clientName + "/" + op[1]);
                     if(file.exists()) {
                         ctx.writeAndFlush(file);
+                    } else {
+                        ctx.writeAndFlush("Такого файла не существует");
                     }
                 }
                 return;
             }
         } else if (msg instanceof File){
+            // Получение файлов с клиента
             File file = (File) msg;
             Files.copy(new FileInputStream(file),
-                    Paths.get("./cloud_server", file.getName()),
+                    Paths.get("./netty-server/src/main/resources/", clientName, "/", file.getName()),
                     StandardCopyOption.REPLACE_EXISTING);
-            ctx.writeAndFlush("FEEDBACK");
+            ctx.writeAndFlush("Файл загружен на сервер");
         }
     }
 

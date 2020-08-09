@@ -1,3 +1,4 @@
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -16,6 +17,7 @@ import java.util.ResourceBundle;
 
 public class NettyController implements Initializable {
     private NettyNetwork network;
+    private String clientName;
 
     @FXML
     TextField msgField;
@@ -29,6 +31,26 @@ public class NettyController implements Initializable {
         // обращение к этим аргументам происходит ввиде args[0] + выполняется -> - лямда выражение
         network = new NettyNetwork((args) -> {
             if (args[0] instanceof String) {
+                // Загрузка файла на сервер
+                String command = (String) args[0];
+                if(command.startsWith("/")) {
+                    if(command.startsWith("/name ")) {
+                        String [] op = command.split(" ");
+                        clientName = op[1];
+                        final File dir1 = new File("./netty-client/src/main/resources/" + clientName + "/");
+                        if(!dir1.exists()) {
+                            dir1.mkdir();
+                        }
+                        return;
+                    }
+                    if(command.startsWith("/upload ")) {
+                        String [] op = command.split(" ");
+                        File file = new File("./netty-client/src/main/resources/" + clientName + "/" + op[1]);
+                        if(file.exists()) {
+                            network.sendMessage(file);
+                        }
+                    }
+                }
                 // Добавляем в mainArea команды отправленные серверу
                 mainArea.appendText((String)args[0] + "\n");
             }
@@ -38,11 +60,13 @@ public class NettyController implements Initializable {
                 try {
                     Files.copy(
                             new FileInputStream(file),
-                            Paths.get("./netty-client/src/main/resources", file.getName()),
+                            Paths.get("./netty-client/src/main/resources",clientName, "/", file.getName()),
                             StandardCopyOption.REPLACE_EXISTING
                     );
                 } catch (IOException e) {
                     e.printStackTrace();
+                } finally {
+                    mainArea.appendText("Файл скачан с сервера\n");
                 }
             }
         });
@@ -55,6 +79,7 @@ public class NettyController implements Initializable {
     }
 
     public void exitAction(ActionEvent actionEvent) {
-
+        network.close();
+        Platform.exit();
     }
 }
