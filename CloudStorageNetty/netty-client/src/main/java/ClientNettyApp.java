@@ -1,4 +1,5 @@
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -15,5 +16,10 @@ public class ClientNettyApp extends Application {
         primaryStage.setTitle("Client Storage");
         primaryStage.setScene(new Scene(root, 400, 400));
         primaryStage.show();
+    }
+
+    @Override
+    public void stop() throws Exception {
+        NettyController.stop();
     }
 }
