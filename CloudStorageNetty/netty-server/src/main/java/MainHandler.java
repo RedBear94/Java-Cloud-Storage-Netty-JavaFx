@@ -40,7 +40,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             System.out.println("message from client " + clientName + ": " + msg);
             ctx.writeAndFlush(msg);
 
-            // Выполнение комманд полученных от клиента
+            // Выполнение команд полученных от клиента
             String command = (String) msg;
             if(command.startsWith("/")) {
                 if(command.startsWith("/download ")) {
@@ -53,6 +53,8 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 }
                 return;
             }
+
+            ctx.writeAndFlush("Отправлена несущестующая команда");
         } else if (msg instanceof File){
             getFile(ctx, (File) msg);
         }

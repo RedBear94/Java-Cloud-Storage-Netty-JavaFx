@@ -45,7 +45,7 @@ public class NettyController implements Initializable {
                     }
                     if(command.startsWith("/local_info")) {
                         mainArea.appendText((String)args[0] + "\n");
-                        printLocalFiles(clientStoragePath + clientName);
+                        printLocalFiles(clientStoragePath + clientName + "/");
                         return;
                     }
                 }
@@ -60,7 +60,6 @@ public class NettyController implements Initializable {
 
     private void printLocalFiles(String path) {
         File dir = new File(path);
-        if(dir.exists() && dir.isDirectory()) {
             for (File file : Objects.requireNonNull(dir.listFiles())) {
                 if (file.isFile()) {
                     mainArea.appendText("[file] " + file.getPath().split("resources" +
@@ -71,7 +70,6 @@ public class NettyController implements Initializable {
                     printLocalFiles(path + file.getName() + "/");
                 }
             }
-        }
     }
 
     private void getFile(Object arg) {
@@ -147,7 +145,7 @@ public class NettyController implements Initializable {
     public void sendCommand(ActionEvent actionEvent) {
         network.sendMessage(msgField.getText());
         msgField.clear();
-        msgField.requestFocus(); // фокус на поле отправки комманд
+        msgField.requestFocus(); // фокус на поле отправки команд
     }
 
     public void exitAction(ActionEvent actionEvent) {
