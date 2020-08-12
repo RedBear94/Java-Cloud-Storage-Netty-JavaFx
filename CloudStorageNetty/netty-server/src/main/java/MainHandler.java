@@ -6,14 +6,26 @@ import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
 
 // Обработчик (Inbound - на вход)
 public class MainHandler extends ChannelInboundHandlerAdapter {
+
+    private String clientName;
+    private static int cnt = 0;
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         // Вызывется один раз при подключении клиента
-        System.out.println("Client connected");
+        cnt++;
+        clientName = "user#" + cnt;
+        System.out.println("Client " + clientName + " connected");
+
+        final File dir1 = new File("./netty-server/src/main/resources/" + clientName + "/");
+        if(!dir1.exists()) {
+            dir1.mkdir();
+        }
+        ctx.writeAndFlush("/name " + clientName);
+        ctx.writeAndFlush("Вы подключились");
     }
 
     @Override
@@ -22,21 +34,36 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         // получение и отправка данных происходит ввиде ByteBuf для первого и последнего handler-ра при отсутвии
         // кодирования и декодирования (в данном случае обрабатываются объекты получаемые от клиента)
         if (msg instanceof String) {
-            System.out.println("string: " + msg);
-        } else if (msg instanceof List) {
-            System.out.println("list: " + msg);
+            System.out.println("message from client " + clientName + ": " + msg);
+            ctx.writeAndFlush(msg);
+
+            // Выполнение комманд полученных от клиента
+            String command = (String) msg;
+            if(command.startsWith("/")) {
+                if(command.startsWith("/download ")) {
+                    String [] op = command.split(" ");
+                    File file = new File("./netty-server/src/main/resources/" + clientName + "/" + op[1]);
+                    if(file.exists()) {
+                        ctx.writeAndFlush(file);
+                    } else {
+                        ctx.writeAndFlush("Такого файла не существует");
+                    }
+                }
+                return;
+            }
         } else if (msg instanceof File){
+            // Получение файлов с клиента
             File file = (File) msg;
             Files.copy(new FileInputStream(file),
-                    Paths.get("./cloud_server", file.getName()),
+                    Paths.get("./netty-server/src/main/resources/", clientName, "/", file.getName()),
                     StandardCopyOption.REPLACE_EXISTING);
-            ctx.writeAndFlush("FEEDBACK");
+            ctx.writeAndFlush("Файл загружен на сервер");
         }
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        cause.printStackTrace();
+        System.out.println("На клиенте " + clientName + " произошло исключение");
         ctx.close(); // отключение клиента при ошибке
     }
 

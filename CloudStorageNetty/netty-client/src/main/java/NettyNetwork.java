@@ -11,12 +11,15 @@ import io.netty.handler.codec.serialization.ObjectEncoder;
 
 public class NettyNetwork {
     private SocketChannel channel;
+    private Callback onMessageReceivedCallBack;
 
     private static final String HOST = "localhost";
     private static final int PORT = 8189;
 
-    public NettyNetwork() {
-        new Thread(() -> {
+    public NettyNetwork(Callback onMessageReceivedCallBack) {
+        this.onMessageReceivedCallBack = onMessageReceivedCallBack;
+
+        Thread thread = new Thread(() -> {
             // 1 пул потоков для работы с сетью (обработки сетевых событий) т.к. никто не будет подключаться к клиенту
             EventLoopGroup workerGroup = new NioEventLoopGroup();
             try {
@@ -32,8 +35,11 @@ public class NettyNetwork {
                                 channel = socketChannel;
                                 // Работаем с объестами => добален добавлены хендлеры кодирования/декодирования
                                 socketChannel.pipeline().addLast(
-                                        new ObjectDecoder(1024 * 1024, ClassResolvers.cacheDisabled(null)),
-                                        new ObjectEncoder()
+                                        new ObjectDecoder(1024 * 1024,
+                                                ClassResolvers.cacheDisabled(null)),
+                                        new ObjectEncoder(),
+                                        // хендлер для получения данных от сервера
+                                        new MainHandler(onMessageReceivedCallBack)
                                 );
                             }
                         });
@@ -47,10 +53,17 @@ public class NettyNetwork {
                 // Закрытие потоков
                 workerGroup.shutdownGracefully();
             }
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
+
 
     public void sendMessage(Object message) {
         channel.writeAndFlush(message);
+    }
+
+    public void close() {
+        channel.close();
     }
 }
