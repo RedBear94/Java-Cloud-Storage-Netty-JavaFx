@@ -83,9 +83,11 @@ public class NettyController implements Initializable {
 
         if (file.isFile()) {
             try {
-                Files.copy(new FileInputStream(file),
+                FileInputStream inputStream = new FileInputStream(file);
+                Files.copy(inputStream,
                         Paths.get(clientStoragePath, clientName, whereSaveFilePath),
                         StandardCopyOption.REPLACE_EXISTING);
+                inputStream.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

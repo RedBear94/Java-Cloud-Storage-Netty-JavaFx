@@ -100,10 +100,12 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         createAllFileDirectories(pathParts, ctx);
 
         if (file.isFile()) {
-            Files.copy(new FileInputStream(file),
+            FileInputStream inputStream = new FileInputStream(file);
+            Files.copy(inputStream,
                     Paths.get(serverStoragePath, clientName, whereSaveFilePath),
                     StandardCopyOption.REPLACE_EXISTING);
             ctx.writeAndFlush("Файл " + file.getName() + " загружен на сервер");
+            inputStream.close();
         } else if(file.isDirectory()){
             final File dir1 = new File(serverStoragePath + clientName + whereSaveFilePath);
             if(!dir1.exists()) {
