@@ -67,9 +67,11 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             if(file.isFile()){
                 file.delete();
                 ctx.writeAndFlush("Файл был удалён");
+                ctx.writeAndFlush("/fin");
             } else {
                 deleteDirectory(file);
                 ctx.writeAndFlush("Директория и всё её содержимое было удалено");
+                ctx.writeAndFlush("/fin");
             }
         }
         else {
@@ -105,6 +107,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                     Paths.get(serverStoragePath, clientName, whereSaveFilePath),
                     StandardCopyOption.REPLACE_EXISTING);
             ctx.writeAndFlush("Файл " + file.getName() + " загружен на сервер");
+            ctx.writeAndFlush("/fin");
             inputStream.close();
         } else if(file.isDirectory()){
             final File dir1 = new File(serverStoragePath + clientName + whereSaveFilePath);

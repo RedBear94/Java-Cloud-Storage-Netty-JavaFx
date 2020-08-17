@@ -2,8 +2,8 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,6 +27,9 @@ public class NettyController implements Initializable {
     @FXML
     TextArea mainArea;
 
+    @FXML
+    VBox clientPanel, serverPanel;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // NettyNetwork - принимает Callback из нескольких аргументов типа Object
@@ -48,6 +51,15 @@ public class NettyController implements Initializable {
                         printLocalFiles(clientStoragePath + clientName + "/");
                         return;
                     }
+                    if(command.startsWith("/delete_c ")) {
+                        mainArea.appendText((String)args[0] + "\n");
+                        deleteFile(command);
+                        return;
+                    }
+                    if(command.startsWith("/fin")){
+                        updatePanels();
+                        return;
+                    }
                 }
                 // Добавляем в mainArea команды отправленные серверу
                 mainArea.appendText((String)args[0] + "\n");
@@ -56,6 +68,36 @@ public class NettyController implements Initializable {
                 getFile(args[0]);
             }
         });
+    }
+
+    private void deleteFile(String command) {
+        String [] op = command.split(" ");
+        File file = new File(clientStoragePath + clientName + "/" + op[1]);
+        if(file.exists()) {
+            if(file.isFile()){
+                file.delete();
+                mainArea.appendText("Файл был удалён\n");
+            } else {
+                deleteDirectory(file);
+                mainArea.appendText("Директория и всё её содержимое было удалено\n");
+            }
+        }
+        else {
+            mainArea.appendText("Такого файла не существует\n");
+        }
+        updatePanels();
+    }
+
+    private void deleteDirectory(final File file) {
+        if(file.isDirectory()) {
+            String[] files = file.list();
+            if ((null != files) && (files.length != 0)) {
+                for (final String filename : files) {
+                    deleteDirectory(new File(file.getAbsolutePath() + "/" + filename));
+                }
+            }
+        }
+        file.delete();
     }
 
     private void printLocalFiles(String path) {
@@ -99,6 +141,14 @@ public class NettyController implements Initializable {
             }
             mainArea.appendText("Директория " + file.getName() +" скачена с сервера\n");
         }
+        updatePanels();
+    }
+
+    private void updatePanels() {
+        PanelController clientPC = (PanelController) clientPanel.getProperties().get("ctrl");
+        PanelController serverPC = (PanelController) serverPanel.getProperties().get("ctrl");
+        clientPC.updateList(Paths.get(clientPC.getCurrentPath()));
+        serverPC.updateList(Paths.get(serverPC.getCurrentPath()));
     }
 
     private void createAllFileDirectories(String[] pathParts) {
@@ -141,9 +191,18 @@ public class NettyController implements Initializable {
         if(!dir1.exists()) {
             dir1.mkdir();
         }
+
+        // В завиимости от имени клиента указывется путь к рабочей директории
+        // PanelController.updateList(Paths.get(clientStoragePath, clientName));
+
+        PanelController clientPC = (PanelController) clientPanel.getProperties().get("ctrl");
+        PanelController serverPC = (PanelController) serverPanel.getProperties().get("ctrl");
+        clientPC.updateList(Paths.get(clientStoragePath, clientName));
+        serverPC.updateList(Paths.get("./netty-server/src/main/resources/", clientName));
         return;
     }
 
+    // -----------------------------
     public void sendCommand(ActionEvent actionEvent) {
         network.sendMessage(msgField.getText());
         msgField.clear();
@@ -158,5 +217,48 @@ public class NettyController implements Initializable {
     public static void stop(){
         network.close();
         Platform.exit();
+    }
+
+    // -----------------------------
+    // методы кнопок комманд серверу
+    public void uploadAction(ActionEvent actionEvent) {
+        PanelController clientPC = (PanelController) clientPanel.getProperties().get("ctrl");
+        //PanelController serverPC = (PanelController) serverPanel.getProperties().get("ctrl");
+
+        if(clientPC.getSelectedFilename() == null){
+            Alert alert = new Alert(Alert.AlertType.WARNING, "Выберите файл для загрузки", ButtonType.OK);
+            alert.showAndWait();
+            return;
+        }
+        String path = (clientPC.getFilePath().split(clientName + Pattern.quote(File.separator), 2)[1]);
+        network.sendMessage("/upload " + path);
+    }
+
+    public void downloadAction(ActionEvent actionEvent) {
+        PanelController serverPC = (PanelController) serverPanel.getProperties().get("ctrl");
+        if(serverPC.getSelectedFilename() == null){
+            Alert alert = new Alert(Alert.AlertType.WARNING, "Выберите файл для скачивания", ButtonType.OK);
+            alert.showAndWait();
+            return;
+        }
+        String path = (serverPC.getFilePath().split(clientName + Pattern.quote(File.separator), 2)[1]);
+        network.sendMessage("/download " + path);
+    }
+
+    public void deleteAction(ActionEvent actionEvent) {
+        PanelController clientPC = (PanelController) clientPanel.getProperties().get("ctrl");
+        PanelController serverPC = (PanelController) serverPanel.getProperties().get("ctrl");
+        if(serverPC.getSelectedFilename() == null && clientPC.getSelectedFilename() == null){
+            Alert alert = new Alert(Alert.AlertType.WARNING, "Выберите файл для удаления", ButtonType.OK);
+            alert.showAndWait();
+            return;
+        }
+        if(serverPC.getSelectedFilename() != null){
+            String path = (serverPC.getFilePath().split(clientName + Pattern.quote(File.separator), 2)[1]);
+            network.sendMessage("/delete " + path);
+        } else if(clientPC.getSelectedFilename() != null){
+            String path = (clientPC.getFilePath().split(clientName + Pattern.quote(File.separator), 2)[1]);
+            network.sendMessage("/delete_c " + path);
+        }
     }
 }
