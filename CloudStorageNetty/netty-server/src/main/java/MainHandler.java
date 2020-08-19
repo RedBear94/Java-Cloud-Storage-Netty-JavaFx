@@ -98,6 +98,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         // Создание/Дублирование путей файла с клиента
         String whereSaveFilePath = file.getPath();
         whereSaveFilePath = whereSaveFilePath.split(clientName, 2)[1]; // /dir1/4.txt
+        System.out.println("whereSaveFilePath = " + whereSaveFilePath);
         String [] pathParts = whereSaveFilePath.split(Pattern.quote(File.separator), 0);
         createAllFileDirectories(pathParts, ctx);
 
@@ -171,9 +172,13 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
     private void createAllFileDirectories(String[] pathParts, ChannelHandlerContext ctx) {
         for(int i = 0; i < pathParts.length - 1; i++){
             final File dir1 = new File(serverStoragePath + clientName + "/" + pathParts[i]);
+            System.out.println(dir1.getPath());
             if(!dir1.exists()) {
                 dir1.mkdir();
                 ctx.writeAndFlush("Директория создана");
+            }
+            if(pathParts.length > 2) {
+                pathParts[i + 1] = pathParts[i].concat("/"+pathParts[i + 1]);
             }
         }
     }

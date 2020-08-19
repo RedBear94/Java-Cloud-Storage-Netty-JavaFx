@@ -154,7 +154,12 @@ public class NettyController implements Initializable {
     private void createAllFileDirectories(String[] pathParts) {
         for(int i = 0; i < pathParts.length - 1; i++){
             final File dir1 = new File(clientStoragePath + clientName + "/" + pathParts[i]);
-            if(!dir1.exists()) {dir1.mkdir();}
+            if(!dir1.exists()) {
+                dir1.mkdir();
+            }
+            if(pathParts.length > 2) {
+                pathParts[i + 1] = pathParts[i].concat("/"+pathParts[i + 1]);
+            }
         }
     }
 
