@@ -86,7 +86,7 @@ public class PanelController implements Initializable {
         filesTable.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
-                if(event.getClickCount() == 2){
+                if(event.getClickCount() == 2 && filesTable.getSelectionModel().getSelectedItem() != null){
                     // pathFiled.getText() - вернет текущий путь, через resolve добавили кусок пути - имя выбранного файла из таблицы
                     Path path = Paths.get(pathFiled.getText()).resolve(filesTable.getSelectionModel().getSelectedItem().getFilename());
                     if(Files.isDirectory(path)){
@@ -137,7 +137,7 @@ public class PanelController implements Initializable {
     }
 
     public String getSelectedFilename(){
-        if(!filesTable.isFocused()){
+        if(!filesTable.isFocused() || filesTable.getSelectionModel().getSelectedItem() == null){
             return null;
         }
         return filesTable.getSelectionModel().getSelectedItem().getFilename();
