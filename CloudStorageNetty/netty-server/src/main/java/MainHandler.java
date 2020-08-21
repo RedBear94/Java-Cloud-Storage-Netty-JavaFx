@@ -67,9 +67,11 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             if(file.isFile()){
                 file.delete();
                 ctx.writeAndFlush("Файл был удалён");
+                ctx.writeAndFlush("/fin");
             } else {
                 deleteDirectory(file);
                 ctx.writeAndFlush("Директория и всё её содержимое было удалено");
+                ctx.writeAndFlush("/fin");
             }
         }
         else {
@@ -96,14 +98,18 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         // Создание/Дублирование путей файла с клиента
         String whereSaveFilePath = file.getPath();
         whereSaveFilePath = whereSaveFilePath.split(clientName, 2)[1]; // /dir1/4.txt
+        System.out.println("whereSaveFilePath = " + whereSaveFilePath);
         String [] pathParts = whereSaveFilePath.split(Pattern.quote(File.separator), 0);
         createAllFileDirectories(pathParts, ctx);
 
         if (file.isFile()) {
-            Files.copy(new FileInputStream(file),
+            FileInputStream inputStream = new FileInputStream(file);
+            Files.copy(inputStream,
                     Paths.get(serverStoragePath, clientName, whereSaveFilePath),
                     StandardCopyOption.REPLACE_EXISTING);
             ctx.writeAndFlush("Файл " + file.getName() + " загружен на сервер");
+            ctx.writeAndFlush("/fin");
+            inputStream.close();
         } else if(file.isDirectory()){
             final File dir1 = new File(serverStoragePath + clientName + whereSaveFilePath);
             if(!dir1.exists()) {
@@ -166,9 +172,13 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
     private void createAllFileDirectories(String[] pathParts, ChannelHandlerContext ctx) {
         for(int i = 0; i < pathParts.length - 1; i++){
             final File dir1 = new File(serverStoragePath + clientName + "/" + pathParts[i]);
+            System.out.println(dir1.getPath());
             if(!dir1.exists()) {
                 dir1.mkdir();
                 ctx.writeAndFlush("Директория создана");
+            }
+            if(pathParts.length > 2) {
+                pathParts[i + 1] = pathParts[i].concat("/"+pathParts[i + 1]);
             }
         }
     }
